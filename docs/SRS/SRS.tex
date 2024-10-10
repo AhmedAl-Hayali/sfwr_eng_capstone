@@ -9,6 +9,9 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{array}
+\graphicspath{ {./diagrams/} }
 \hypersetup{
     bookmarks=true,         % show bookmarks bar?
       colorlinks=true,      % false: boxed links; true: colored links
@@ -124,11 +127,89 @@ involved in the Project}
 
 \section{The Scope of the Product}
 \subsection{Product Boundary}
-\lips
+\includegraphics[width=\textwidth]{product_boundary.png} \\
 \subsection{Product Use Case Table}
-\lips
+\begin{table}[!ht]
+    \centering
+    \begin{tabular}{|l|l|l|l|}
+    \hline
+        \textbf{PUC No} & \textbf{PUC Name} & \textbf{Actor/s} & \textbf{Input\&Output} \\ \hline
+        1 & UI Interaction & User & User Actions (click, swipe, drag) (in) \\
+ \\
+System Response (out) \\
+ \\ \hline
+        2 & Song Recommendation Based on Features & User & Users desired features (in) \\
+ \\
+collection of references songs (out) \\
+ \\ \hline
+        3 & Music Generation based on Input & User & reference song(s) and/or song snippet(s)   (in) \\
+ \\
+generated song or song snippet (out) \\
+ \\ \hline
+        4 & Analyze Music & User & reference song or song snippet (in) \\
+ \\
+Collection of features and visualizations (out) \\
+ \\ \hline
+        5 & Song Recommendation Based on Input & User & reference song(s) (in) \\
+ \\
+collection of references songs (out) \\
+ \\ \hline
+    \end{tabular}
+\end{table}
 \subsection{Individual Product Use Cases (PUC's)}
-\lips
+\textbf{1. Product Use Case Name:} UI Interaction \\
+\textbf{Trigger:} User commits some action (e.g. clicking, swiping, dragging) \\
+\textbf{Preconditions:} User has successfully accessed GenreGuru, or is already in GenreGuru \\
+\textbf{Interested Stakeholders:} All \\
+\textbf{Actor/s:} User \\
+\textbf{Activity Diagram:} \\
+\includegraphics[width=\textwidth]{UI.png} \\
+\textbf{Outcome:} The user will commit an action like swiping or pressing and the system will react depending on the action.
+
+\vspace{1cm}
+
+\noindent \textbf{2. Product Use Case Name:} Song Recommendation Based on Features \\
+\textbf{Trigger:} User picks features, and indicates they want to search for recommendations \\
+\textbf{Preconditions:} User must have GenreGuru open, the user has selected features to search for \\
+\textbf{Interested Stakeholders:} Casual Music Listeners, Hobbyist Musicians \\
+\textbf{Actor/s:} User \\
+\textbf{Activity Diagram:} \\
+\includegraphics[width=\textwidth]{recommendation_feature.png} \\
+\textbf{Outcome:} The user will select or manually enter features they are looking for in a song, and the system will first check to see if the features they selected/entered are valid, and the system will return a collection of reference songs that match those features.
+
+\vspace{1cm}
+
+\noindent \textbf{3. Product Use Case Name:} Music Generation Based on Input \\
+\textbf{Trigger:} User inputs reference song(s) and/or song snippet(s), and indicates they want to generate a song \\
+\textbf{Preconditions:} User must have GenreGuru open, and the user has provided a valid input(s) \\
+\textbf{Interested Stakeholders:} Music producers, Hobbyist Musicians \\
+\textbf{Actor/s:} User \\
+\textbf{Activity Diagram:} \\
+\includegraphics[width=\textwidth]{generate_song.png} \\
+\textbf{Outcome:} The user will enter song(s) and/or song snippet(s) and indicate to the system that they want to generate music, the system will check that these inputs are valid (correct format) and then will generate a song and return it to the user.
+
+\vspace{1cm}
+
+\noindent \textbf{4. Product Use Case Name:} Analyze Music \\
+\textbf{Trigger:} User inputs a reference song or song snippet and indicates they want to analyze the music \\
+\textbf{Preconditions:} User must have GenreGuru open, and the user has provided a valid input \\
+\textbf{Interested Stakeholders:} Music Producers, Audio Engineers, Music Educators \\
+\textbf{Actor/s:} User \\
+\textbf{Activity Diagram:} \\
+\includegraphics[width=\textwidth]{analyze_song.png} \\
+\textbf{Outcome:} The user will input a reference song or song snippet and indicate they want to analyze the song, the system will validate the input and return a set of features and visualizations.
+
+\vspace{1cm}
+
+\noindent \textbf{5. Product Use Case Name:} Song Recommendation Based on Input \\
+\textbf{Trigger:} User inputs reference song(s) and/or snippet(s), and indicates they want to search for recommendations \\
+\textbf{Preconditions:} User must have GenreGuru open, and the user has provided a valid input(s) \\
+\textbf{Interested Stakeholders:} Casual Music Listeners, Hobbyist Musicians \\
+\textbf{Actor/s:} User \\
+\textbf{Activity Diagram:} \\
+\includegraphics[width=\textwidth]{recommend_song.png} \\
+\textbf{Outcome:} The users will input reference song(s) and/or snippet(s), the system will first check to see if the inputs are valid. Then the system will return a collection of reference songs.
+
 
 \section{Functional Requirements}
 \subsection{Functional Requirements}
