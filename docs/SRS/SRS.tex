@@ -9,6 +9,8 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{hyperref}
+\usepackage{graphicx}
+
 \hypersetup{
     bookmarks=true,         % show bookmarks bar?
       colorlinks=true,      % false: boxed links; true: colored links
@@ -77,21 +79,124 @@ Date 2 & 1.1 & Notes\\
 
 \section{Mandated Constraints}
 \subsection{Solution Constraints}
-\lips
+\begin{itemize}
+  \item Constraint
+  \\ \textbf{Rationale:} 
+  \\ \textbf{Fit Criterion:} 
+
+  \item The Service shall handle user interaction through a web application.
+  \\\textbf{Rationale}: allows for users to access the service through any device with an internet connection
+  \\\textbf{Fit Criterion}: the web application functions correctly on both a mobile phone browser and PC. 
+
+  \item The service uses a music dataset, such as openAI's jukebox dataset. 
+  \\ \textbf{Rationale:} A dataset for an AI project is necessary as some form of training data must be used 
+  in order to train the AI generative, analysis and recommendation systems. 
+  \\ \textbf{Fit Criterion:} The system uses a music dataset as the training source. 
+
+  \item The service uses a cloud infrastructure for computations.
+  \\ \textbf{Rationale:} The cloud infrastructure is scalable and allows for computation for the AI portions
+  of the project to not be done locally. 
+  \\ \textbf{Fit Criterion:} The system must be deployed on a form of a cloud platform (such as AWS), and utilize the platform for some features
+  such as the machine learning components. 
+
+  \item The service uses a modern database system. 
+  \\ \textbf{Rationale:} A database system would allow the service to store user data, song metadata, it can act like a pseudo-cache for performance. 
+  \\ \textbf{Fit Criterion:} A database that stores music metadata must be deployed. 
+  
+
+\end{itemize}
+
 \subsection{Implementation Environment of the Current System}
-\lips
+\begin{itemize}
+  \item Cloud Hosting Infrastructure
+  \\ \textbf{Rationale:} Cloud hosting can allow the service to remotely store user and service information, in addition to AI machine learning 
+  features.
+
+  \item Computational Resources Available for the Service/Hardware Constraints
+  \\ \textbf{Rationale:} The computational resources accessible for both the training and service provision to the user must be considered. 
+  This can include, but is not limited to how powerful the CPU, GPU that can be used to train the machine learning model and what level of
+  computational power the end user has on hand determines how much resources the services can use to give the user their desired results. 
+
+  \item Storage/Database Systems
+  \\ \textbf{Rationale:} How the training data and user data is trained are both very important considerations. This can include both using some form
+  of a cloud storage or local database. 
+
+  \item Network Constraints
+  \\ \textbf{Rationale:} The system will likely require a fast, high-bandwidth internet connections because the user is expected to upload music or references 
+  to said music before the service responds to the user request. This means an efficient method of allowing users to upload said references is 
+  important, as the user uploading entire music files might greatly reduce the amount of music that can be fed into the final service (as some
+  of said music files would likely be illegally obtained) and would require uploading far too much data, thus slowing the entire process down.
+
+  \item External Resources Constraints
+  \\ \textbf{Rationale:} The service will most likely have to access an external API, such as spotify's, which already includes a lot of 
+  useful information that can be provided for the service in order to function. Whether these are available or not, or how expensive the API
+  calls actually are can greatly affect the viability of certain aspects of the project. This also includes open source music data sets for
+  a machine learning project, it is possible those sets only contain a certain type of music (such as electronic) and does not feature a lot of
+  hip hop, which can prevent the service from effectively engaging with certain types of sound or genre. 
+
+  \item Security Constraints
+  \\ \textbf{Rationale:} Security protocols to protect a potential remote server the service employs and preventing unauthorized access to 
+  user data are both potentially very important elements of the service that need to be considered. 
+
+  \item Liscensing Constraints 
+  \\ \textbf{Rationale:} Currently, there is an ongoing debate over whether AI generation, especially related to art, can be considered 
+  as plagiarism or intellectual properthy theft. If the machine learning components of the service is trained on music from a large artist 
+  that does not approve of the end project, it is possible that there would be some form of legal consequences, thus the selection of 
+  trianing data and what songs the user is allowed to input into the final model needs to be seriously considered. 
+
+\end{itemize}
+
 \subsection{Partner or Collaborative Applications}
-\lips
+
+\includegraphics[scale=0.72]{3_3_partner_constraints_figure}
+
 \subsection{Off-the-Shelf Software}
-\lips
+\begin{itemize}
+  \item Music-related AI machine learning model
+  \\ \textbf{Rationale:} Using an off the shelf that is manually trained and then retuned
+  for our purposes or given additional features that weren't included by default. This is largely
+  so that some of the groundwork can already be done, making the project significantly more
+  feasible. 
+
+  \item Music Provider API services 
+  \\ \textbf{Rationale:} Using a music service provider's API such as spotify's would 
+  greatly simplify the work that needs to be done as these services already offer a lot of useful
+  information, such as song features (danceability, popularity, etc) that can be used as 
+  features for the machine learning model. 
+
+\end{itemize}
+
 \subsection{Anticipated Workplace Environment}
-\lips
+\begin{itemize}
+  \item Home Usage
+  \\ \textbf{Rationale:} This environment is more appropriate for casual music listeners. 
+  This means users will most likely be using it in a form of a casual environment, such as their phone.
+  This means that uploading songs and snippets must be easy and convenient on a mobile device, such 
+  as being able to directly input a spotify platlist. 
+
+  \item Studio Usage
+  \\ \textbf{Rationale:} This environment is more professional and what is most likely what 
+  creative professionals will be using. The expectation is that they will be using this on their 
+  computers, thus they are more likely have a reliable internet connection in addition to being
+  willing to input a lot more music to the service. T
+
+\end{itemize}
+
 \subsection{Schedule Constraints}
-\lips
+This project was started in the 2024 Fall Term and is expected to be completed by the 
+2025 winter term at McMaster university. Some of the key deadlines are: \\
+Proof of concept, November 11-22nd\\
+Final demonstraintion, March 24-30th\\
+Final Documentation, April 2\\
+
 \subsection{Budget Constraints}
-\lips
+The budget limit as stated by the capstone outline is 750\$ CAD. Potential additional
+costs might include API calls, software liscensing, account fees for cloud services. 
+For the purposes of the demonstration they should not exceed the 750\$ limit. 
+
 \subsection{Enterprise Constraints}
-\lips
+There are no specific enterprise constraints as we do not have outside investors
+for this project. 
 
 \section{Naming Conventions and Terminology}
 \subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders
