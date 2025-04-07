@@ -9,11 +9,10 @@ import uuid
 from io import BytesIO
 from pydub import AudioSegment
 from deezer import Client
-
-
-# app = Flask(__name__)
-# CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-# URL_STORE_ENDPOINT = "https://genreguru.onrender.com/update-url"
+import pandas as pd
+from src.featurizer.main_featurizer import Featurizer
+from src.db.db_functions import DB_Engine
+from src.recommendation.recommend import Recommendation
 
 class Server:
     def __init__(self):
@@ -32,18 +31,15 @@ class Server:
         self.app.add_url_rule("/process", view_func=self.process_request, methods=["POST"])
         self.app.add_url_rule("/ping", view_func=self.ping, methods=["GET"])
 
-    def save_wav_file(self, wav_file, output_dir='.', custom_name=None):
+    def save_wav_file(self, encoded_wav, output_path=f"received_{uuid.uuid4().hex}.wav"):
         try:
-            filename = custom_name or f'received_{uuid.uuid4().hex}.wav'
-            output_path = f'{output_dir}/{filename}'
-
-            with open(output_path, 'wbn') as f:
-                f.write(wav_file.read())
-
-            print(f'WAV file saved successfully: {output_path}')
+            wav_data = base64.b64decode(encoded_wav)
+            with open(output_path, "wb") as wav_file:
+                wav_file.write(wav_data)
+            print(f"WAV file saved successfully: {output_path}")
             return output_path
         except Exception as e:
-            print(f'Error saving WAV file: {e}')
+            print(f"Error saving WAV file: {e}")
             return None
 
     # @app.route("/process", methods=["POST"])
@@ -112,41 +108,60 @@ class Server:
                 deezer_ID = str(deezer_track["id"])
                 print('deezer id:', deezer_ID)
                 print("successfully gotten the deezer ID")
-                # in the case where the db is already there:
-                if not self.db.check_if_record_exists(deezer_ID):
-                    print("successfully gotten the deezer ID NOT FOUND! FEATURIZE")
-                    #fetch preview
-                    preview_url = self.dz.get_track(deezer_ID).preview
-                    response = requests.get(preview_url)
-                    mp3_bytes = BytesIO(response.content)
+                #fetch preview
+                preview_url = self.dz.get_track(deezer_ID).preview
+                response = requests.get(preview_url)
+                mp3_bytes = BytesIO(response.content)
 
-                    print("Successfully extracted preview url content")
-                    # Step 2: Convert MP3 to WAV using pydub
-                    audio = AudioSegment.from_file(mp3_bytes, format="mp3")
-                    wav_object = BytesIO()
-                    audio.export(wav_object, format="wav")
-                    wav_object.seek(0)
-                    print("Successfully exported to wav")
+                print("Successfully extracted preview url content")
+                # Step 2: Convert MP3 to WAV using pydub
+                audio = AudioSegment.from_file(mp3_bytes, format="mp3")
+                wav_object = BytesIO()
+                audio.export(wav_object, format="wav")
+                wav_object.seek(0)
+                print("Successfully exported to wav")
 
-                    features = self.featurizer.run(wav_object)
-                    print("Successfully computed features")
+                features = self.featurizer.run(wav_object)
+                print("Successfully computed features")
+                # # in the case where the db is already there:
+                # if not self.db.check_if_record_exists(deezer_ID):
+                #     print("successfully gotten the deezer ID NOT FOUND! FEATURIZE")
+                #     #fetch preview
+                #     preview_url = self.dz.get_track(deezer_ID).preview
+                #     response = requests.get(preview_url)
+                #     mp3_bytes = BytesIO(response.content)
 
-                    #now insert our record
-                    self.db.insert_record(deezer_ID, features)
-                    print("Successfully inserted record")
+                #     print("Successfully extracted preview url content")
+                #     # Step 2: Convert MP3 to WAV using pydub
+                #     audio = AudioSegment.from_file(mp3_bytes, format="mp3")
+                #     wav_object = BytesIO()
+                #     audio.export(wav_object, format="wav")
+                #     wav_object.seek(0)
+                #     print("Successfully exported to wav")
+
+                #     features = self.featurizer.run(wav_object)
+                #     print("Successfully computed features")
+
+                #     #now insert our record
+                #     self.db.insert_record(deezer_ID, features)
+                #     print("Successfully inserted record")
                 
-                DB_dataframe = self.db.obtain_all_records()
-                print("obtained database dataframe")
-                recommender = Recommendation(data=DB_dataframe)
+                # DB_dataframe = self.db.obtain_all_records()
+                # print("obtained database dataframe")
+                # recommender = Recommendation(data=DB_dataframe)
 
-                recommended_songs = recommender.get_similar_songs(deezer_ID)
-                print("recommendations generated")
-                print(recommended_songs.index.to_numpy())
-                recommended_songs_ids = recommended_songs.index.to_numpy()
-                print("extracted ids")
-                recommended_songs_ids = [int(sid) for sid in recommended_songs_ids]
+                # recommended_songs = recommender.get_similar_songs(deezer_ID)
+                # print("recommendations generated")
+                # print(recommended_songs.index.to_numpy())
+                # recommended_songs_ids = recommended_songs.index.to_numpy()
+                # print("extracted ids")
+                # recommended_songs_ids = [int(sid) for sid in recommended_songs_ids]
 
-                return jsonify({"track_ids": recommended_songs_ids})
+                # return jsonify({"track_ids": recommended_songs_ids})
+                # For testing purposes, return the fixed set of track IDs.
+                testing_ids = [503180672, 107474524, 2141158397, 138544267, 138540791, 130548904, 116348232, 62743225, 3102947, 116348260]
+                print("Returning test track IDs:", testing_ids)
+                return jsonify({"track_ids": testing_ids})
 
         except Exception as e:
             print("Error in /process:", str(e))
@@ -205,7 +220,7 @@ class Server:
     def run(self):
         self.start_ngrok_and_post_url()
         self.periodically_update_ngrok_url() # updates every 60 seconds
-        app.run(host="0.0.0.0", port=5000)
+        self.app.run(host="0.0.0.0", port=5000)
 
 if __name__ == "__main__":
     server = Server()

@@ -29,19 +29,19 @@ export const getBaseURL = async () => {
   }
 };
 
-// ✅ Upload a WAV file using FormData instead of base64
-export const uploadWavFile = async (formData) => {
+// Upload a WAV file for recommendations
+export const uploadWavFile = async (base64Wav) => {
   try {
     const API_BASE_URL = await getBaseURL();
-    const response = await axios.post(`${API_BASE_URL}/process`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+
+    const response = await axios.post(`${API_BASE_URL}/process`, {
+      is_wav_file: true,
+      file: base64Wav,
     });
 
-    return response.data.track_ids || []; // Expecting track_ids from backend
+    return response.data.deezer_tracks || []; // adapt as needed
   } catch (err) {
-    console.error("Upload failed:", err);
+    console.error("Upload failed (backend_api.js):", err);
     throw err;
   }
 };
