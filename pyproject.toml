@@ -19,7 +19,10 @@ dependencies = [
     "tensorflow",
     "scipy",
     "spleeter >= 2.4.0",
+    "sqlalchemy",
+    "tomli",
+    "psycopg"
 ]
 
 [tool.setuptools]
-packages = ["src.featurizer", "src.recommendation"]
+packages = ["src.featurizer", "src.recommendation", "src.server", "src.db"]

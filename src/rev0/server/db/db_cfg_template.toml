@@ -1,0 +1,15 @@
+title = "Database Configuration File"
+
+[DATABASE-remote]
+USERNAME = ""
+PASSWORD = ""
+HOST = ""
+DATABASE = ""
+PORT = ""
+
+[DATABASE-local]
+USERNAME = ""
+PASSWORD = ""
+HOST = ""
+DATABASE = ""
+PORT = ""

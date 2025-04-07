@@ -21,8 +21,8 @@ class Recommendation:
         self.df_encoded = self.df.copy()
 
         # Convert categorical features (major/minor) to numerical
-        self.df_encoded['major'] = self.df_encoded['major'].astype('category').cat.codes
-        self.df_encoded['minor'] = self.df_encoded['minor'].astype('category').cat.codes
+        self.df_encoded['keymjr'] = self.df_encoded['keymjr'].astype('category').cat.codes
+        self.df_encoded['keymnr'] = self.df_encoded['keymnr'].astype('category').cat.codes
 
         # Select numerical feature columns (excluding 'track_name')
         self.feature_cols = [col for col in self.df_encoded.columns if col not in ['track_name']]
