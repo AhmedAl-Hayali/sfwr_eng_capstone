@@ -8,9 +8,11 @@ import { motion } from "framer-motion";
 const LoadingPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { selectedTrack } = location.state || {};
+  // const { selectedTrack } = location.state || {};
+  // const { deezerTracks } = location.state || {};
+  const { selectedTrack, deezerTracks } = location.state || {};
 
-  // ✅ Block key input except refresh/system keys
+  // Block key input except refresh/system keys
   useEffect(() => {
     const blockKeys = (e) => {
       const allowedKeys = ["F5", "F11", "F12", "Tab"];
@@ -31,6 +33,27 @@ const LoadingPage = () => {
   // ✅ Recommendation fetch + redirect fallback
   useEffect(() => {
     // Refresh-safe: Redirect to home if no selectedTrack
+    if (deezerTracks) {
+      // needs to be handled differently as wav gets the trackid's directly
+      const getRecommendations = async () => { 
+        try {
+          //simply set this to deezerTracks I think??
+          const recommendedTrackIds = deezerTracks;
+          //navigate once we have our ids, but pass empty thing for selectedTrack as we don't have anything there
+          console.log("Recommended Track IDs:", recommendedTrackIds);
+          navigate("/results", {
+            state: { trackIds: recommendedTrackIds, selectedTrack: null },
+          });
+        } catch (err) {
+          console.error("Error fetching recommendations:", err);
+          alert("Error getting recommendations.");
+          navigate("/");
+        }
+      };
+      getRecommendations();
+      return; // Stop further execution in this effect.
+    }
+
     if (!selectedTrack || !selectedTrack.external_ids?.isrc) {
       console.warn("No selectedTrack found. Probably a refresh on /loading.");
       navigate("/", { replace: true });
@@ -61,7 +84,7 @@ const LoadingPage = () => {
     };
 
     getAndSendRecommendations();
-  }, [selectedTrack, navigate]);
+  }, [selectedTrack, deezerTracks, navigate]);
 
   return (
     <motion.div

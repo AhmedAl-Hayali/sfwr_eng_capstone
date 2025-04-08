@@ -39,7 +39,9 @@ export const uploadWavFile = async (base64Wav) => {
       file: base64Wav,
     });
 
-    return response.data.deezer_tracks || []; // adapt as needed
+    console.log("reached return statement in the backend_api.js file")
+    // return response.data.deezer_tracks || []; // adapt as needed
+    return response.data.track_ids || []; // adapt as needed
   } catch (err) {
     console.error("Upload failed:", err);
     throw err;

@@ -3,6 +3,7 @@ import "../styles/uploadfile.css";
 import { uploadWavFile } from "../services/backend_api";
 import { useNavigate } from "react-router-dom";
 import React, { useRef, useState } from "react";
+const MAX_SIZE_MB = 30;
 
 const UploadFile = () => {
   const navigate = useNavigate();
@@ -14,7 +15,14 @@ const UploadFile = () => {
     if (!file || file.type !== "audio/wav") {
       alert("Please upload a valid .wav file.");
       return;
+
     }
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > MAX_SIZE_MB) {
+      alert("File too large. Please upload a file under " + MAX_SIZE_MB + "MB.");
+      return;
+    }
+
     try {
       setUploading(true);
       // Create a new FileReader instance
@@ -36,9 +44,11 @@ const UploadFile = () => {
       // wait for a response from the server
       const deezerTracks = await uploadWavFile(base64Wav);
       
-      console.log("received results...navigating");
-      // Navigate to the results page with the returned tracks
-      navigate("/results", { state: { deezerTracks } });
+      console.log("received deezerTracks: ", deezerTracks);
+      // Navigate to the loading page with the returned tracks
+      // navigate("/results", { state: { deezerTracks } });
+      navigate("/loading", { state: { deezerTracks } });
+
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Error uploading audio file.");
