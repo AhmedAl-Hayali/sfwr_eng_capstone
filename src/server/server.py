@@ -14,6 +14,8 @@ from src.featurizer.main_featurizer import Featurizer
 from src.db.db_functions import DB_Engine
 from src.recommendation.recommend import Recommendation
 
+import numpy as np
+
 class Server:
     def __init__(self):
         #init our functions
@@ -25,23 +27,24 @@ class Server:
         self.app = Flask(__name__)
         CORS(self.app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
         self.URL_STORE_ENDPOINT = "https://genreguru.onrender.com/update-url"
-        self.register_routes()
-
-    def register_routes(self):
         self.app.add_url_rule("/process", view_func=self.process_request, methods=["POST"])
         self.app.add_url_rule("/ping", view_func=self.ping, methods=["GET"])
-
-    def save_wav_file(self, encoded_wav, output_path=f"received_{uuid.uuid4().hex}.wav"):
+   
+    """used to avoid saving the file."""
+    def save_wav_file(self, encoded_wav):
         try:
+            # Decode the base64-encoded WAV data
             wav_data = base64.b64decode(encoded_wav)
-            with open(output_path, "wb") as wav_file:
-                wav_file.write(wav_data)
-            print(f"WAV file saved successfully: {output_path}")
-            return output_path
+            # Create an in-memory binary stream containing the data
+            wav_object = BytesIO(wav_data)
+            # Ensure the stream position is at the beginning
+            wav_object.seek(0)
+            print("WAV object created successfully in memory.")
+            return wav_object
         except Exception as e:
-            print(f"Error saving WAV file: {e}")
+            print(f"Error creating WAV object: {e}")
             return None
-
+ 
     # @app.route("/process", methods=["POST"])
     def process_request(self):
         try:
@@ -66,27 +69,69 @@ class Server:
                 features = self.featurizer.run(file_path)
                 print("wav file featurized")
 
-                feat_names = ['spctrl_rlf',
-                            'spctrl_cntrd',
-                            'spctrl_bw',
-                            'spctrl_cntrst',
-                            'rms',
-                            'spctrl_flux',
-                            'dnmc_rng',
-                            'instrmntlns']
+                # with open("features.txt", "w") as file: file.write(str(features))
+                # for key, value in features.items(): 
+                #     print(f"Key: {key} -> Type: {type(value)}")
+                #     try:
+                #         print("   Shape:", value.shape)
+                #     except AttributeError:
+                #         pass 
 
-                features = [feature.flatten() for feature in features.values()]
-                print(features)
                 #instead of using deezer_id (we dont have one insert a fake id and the associated features:)
                 spoofed_id = "00000000"
+                column_map = {
+                    'collapsed_rolloff':'spctrl_rlf',
+                    'collapsed_centroid':'spctrl_cntrd',
+                    'collapsed_bandwidth':'spctrl_bw',
+                    'collapsed_contrast':'spctrl_cntrst',
+                    'collapsed_rms':'rms',
+                    'collapsed_flux':'spctrl_flux',
+                    'collapsed_dynamic_range':'dnmc_rng',
+                    'collapsed_instrumentalness':'instrmntlns'
+                }
+                # create rows and columns for our new thing, insert the id on init
+                columns = ["track_id"]
+                row = [spoofed_id]
+
+                #flatten all the numpy arrays and append. handles when user input is too small to compute 8 features properly
+                for featurizer_key, new_column_name in column_map.items():
+                    numpy_arr = features[featurizer_key].flatten()
+                    # Compute the average, ignoring any NaNs
+                    avg_val = np.nanmean(numpy_arr)
+                    for i in range(len(numpy_arr)):
+                        columns.append(f"{new_column_name}_{i+1}")
+                        value = numpy_arr[i]
+                        if np.isnan(value): value = avg_val # Replace NaN with the computed average
+                        row.append(value)
+                
+                #append the single values, keymjr, keymnr, bpm
+                columns.append("bpm")
+                columns.append("keymjr")
+                columns.append("keymnr")
+
+                row.append(features["bpm"])
+                row.append(features["major_key"])
+                row.append(features["minor_key"])
+                
+
+                featurized_df = pd.DataFrame([row], columns=columns)
+                # print(columns)
+                # print(row)
+                # print(featurized_df)
+                
                 DB_dataframe = self.db.obtain_all_records()
                 print("obtained database dataframe")
 
-                #insert spoofed_id, features into db_dataframe
-                x = pd.DataFrame([spoofed_id] + features, columns=['track_id']+[f'{feat_name}_{i}' for feat_name in feat_names for i in range(1, 8+1)]+['bpm', 'keymjr', 'keymnr'])
-                DB_dataframe = pd.concat([DB_dataframe, x])
+                # now that we have our dataframe, we must insert featurized_df into it.
+                DB_dataframe = pd.concat([DB_dataframe, featurized_df], ignore_index=True)
+                print("Combined DataFrame")
 
-                print("obtained database dataframe")
+                # print(DB_dataframe)
+                # """inspect"""
+                # output_filepath = "db_dataframe_output.csv"
+                # DB_dataframe.to_csv(output_filepath, index=False)
+                # print(f"Output saved to {output_filepath}")
+                
                 recommender = Recommendation(data=DB_dataframe)
                 recommended_songs = recommender.get_similar_songs(spoofed_id)
                 print("recommendations generated")
@@ -104,65 +149,47 @@ class Server:
                 print("Received Deezer Track:", deezer_track)
 
                 if not deezer_track: raise ValueError("Missing deezer_track in request")
-
+                
                 deezer_ID = str(deezer_track["id"])
                 print('deezer id:', deezer_ID)
                 print("successfully gotten the deezer ID")
-                #fetch preview
-                preview_url = self.dz.get_track(deezer_ID).preview
-                response = requests.get(preview_url)
-                mp3_bytes = BytesIO(response.content)
+                # in the case where the db is already there:
+                if not self.db.check_if_record_exists(deezer_ID):
+                    print("successfully gotten the deezer ID NOT FOUND! FEATURIZE")
+                    #fetch preview
+                    preview_url = self.dz.get_track(deezer_ID).preview
+                    response = requests.get(preview_url)
+                    mp3_bytes = BytesIO(response.content)
 
-                print("Successfully extracted preview url content")
-                # Step 2: Convert MP3 to WAV using pydub
-                audio = AudioSegment.from_file(mp3_bytes, format="mp3")
-                wav_object = BytesIO()
-                audio.export(wav_object, format="wav")
-                wav_object.seek(0)
-                print("Successfully exported to wav")
+                    print("Successfully extracted preview url content")
+                    # Step 2: Convert MP3 to WAV using pydub
+                    audio = AudioSegment.from_file(mp3_bytes, format="mp3")
+                    wav_object = BytesIO()
+                    audio.export(wav_object, format="wav")
+                    wav_object.seek(0)
+                    print("Successfully exported to wav")
 
-                features = self.featurizer.run(wav_object)
-                print("Successfully computed features")
-                # # in the case where the db is already there:
-                # if not self.db.check_if_record_exists(deezer_ID):
-                #     print("successfully gotten the deezer ID NOT FOUND! FEATURIZE")
-                #     #fetch preview
-                #     preview_url = self.dz.get_track(deezer_ID).preview
-                #     response = requests.get(preview_url)
-                #     mp3_bytes = BytesIO(response.content)
+                    features = self.featurizer.run(wav_object)
+                    print("Successfully computed features")
 
-                #     print("Successfully extracted preview url content")
-                #     # Step 2: Convert MP3 to WAV using pydub
-                #     audio = AudioSegment.from_file(mp3_bytes, format="mp3")
-                #     wav_object = BytesIO()
-                #     audio.export(wav_object, format="wav")
-                #     wav_object.seek(0)
-                #     print("Successfully exported to wav")
-
-                #     features = self.featurizer.run(wav_object)
-                #     print("Successfully computed features")
-
-                #     #now insert our record
-                #     self.db.insert_record(deezer_ID, features)
-                #     print("Successfully inserted record")
+                    #now insert our record
+                    self.db.insert_record(deezer_ID, features)
+                    print("Successfully inserted record")
                 
-                # DB_dataframe = self.db.obtain_all_records()
-                # print("obtained database dataframe")
-                # recommender = Recommendation(data=DB_dataframe)
+                DB_dataframe = self.db.obtain_all_records()
+                print("obtained database dataframe")
+                
+                recommender = Recommendation(data=DB_dataframe)
+                recommended_songs = recommender.get_similar_songs(deezer_ID)
+                print("recommendations generated")
 
-                # recommended_songs = recommender.get_similar_songs(deezer_ID)
-                # print("recommendations generated")
-                # print(recommended_songs.index.to_numpy())
-                # recommended_songs_ids = recommended_songs.index.to_numpy()
-                # print("extracted ids")
-                # recommended_songs_ids = [int(sid) for sid in recommended_songs_ids]
+                print(recommended_songs.index.to_numpy())
+                recommended_songs_ids = recommended_songs.index.to_numpy()
+                print("extracted ids")
+                recommended_songs_ids = [int(sid) for sid in recommended_songs_ids]
 
-                # return jsonify({"track_ids": recommended_songs_ids})
-                # For testing purposes, return the fixed set of track IDs.
-                testing_ids = [503180672, 107474524, 2141158397, 138544267, 138540791, 130548904, 116348232, 62743225, 3102947, 116348260]
-                print("Returning test track IDs:", testing_ids)
-                return jsonify({"track_ids": testing_ids})
-
+                return jsonify({"track_ids": recommended_songs_ids})
+            
         except Exception as e:
             print("Error in /process:", str(e))
             return jsonify({"error": str(e)}), 500
@@ -217,12 +244,12 @@ class Server:
         thread = threading.Thread(target=updater, daemon=True)
         thread.start()
 
-    def run(self):
+    def execute(self):
         self.start_ngrok_and_post_url()
         self.periodically_update_ngrok_url() # updates every 60 seconds
         self.app.run(host="0.0.0.0", port=5000)
 
 if __name__ == "__main__":
     server = Server()
-    server.run()
+    server.execute()
     
