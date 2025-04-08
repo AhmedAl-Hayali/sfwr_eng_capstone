@@ -41,12 +41,12 @@ export const uploadWavFile = async (base64Wav) => {
 
     return response.data.deezer_tracks || []; // adapt as needed
   } catch (err) {
-    console.error("Upload failed (backend_api.js):", err);
+    console.error("Upload failed:", err);
     throw err;
   }
 };
 
-// ✅ Submit a Deezer track for recommendations
+// Submit a Deezer track for recommendations
 export const fetchRecommendations = async (deezerTrack) => {
   try {
     const API_BASE_URL = await getBaseURL();
